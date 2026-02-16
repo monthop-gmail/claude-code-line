@@ -1,0 +1,12 @@
+{
+  "name": "claude-code-line",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@line/bot-sdk": "^9.6.0"
+  }
+}

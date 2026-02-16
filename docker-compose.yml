@@ -1,0 +1,29 @@
+services:
+  line-bot:
+    build: .
+    container_name: claude-code-line-bot
+    environment:
+      - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
+      - LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PORT=3000
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-sonnet}
+      - CLAUDE_MAX_TURNS=${CLAUDE_MAX_TURNS:-10}
+      - CLAUDE_MAX_BUDGET_USD=${CLAUDE_MAX_BUDGET_USD:-1.00}
+      - CLAUDE_TIMEOUT_MS=${CLAUDE_TIMEOUT_MS:-300000}
+      - WORKSPACE_DIR=/workspace
+    volumes:
+      - ${PROJECT_DIR:-./workspace}:/workspace
+      - claude-data:/home/claude/.claude
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: claude-code-line-tunnel
+    command: tunnel --no-autoupdate --url http://line-bot:3000
+    depends_on:
+      - line-bot
+    restart: unless-stopped
+
+volumes:
+  claude-data:
