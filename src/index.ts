@@ -5,7 +5,8 @@ import { createHmac } from "node:crypto"
 const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN
 const channelSecret = process.env.LINE_CHANNEL_SECRET
 const port = Number(process.env.PORT ?? 3000)
-const anthropicAuthToken = process.env.ANTHROPIC_AUTH_TOKEN ?? process.env.ANTHROPIC_API_KEY
+const anthropicApiKey = process.env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_AUTH_TOKEN
+const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL
 const claudeModel = process.env.CLAUDE_MODEL ?? "sonnet"
 const claudeMaxTurns = process.env.CLAUDE_MAX_TURNS ?? "10"
 const claudeMaxBudget = process.env.CLAUDE_MAX_BUDGET_USD ?? "1.00"
@@ -16,16 +17,16 @@ if (!channelAccessToken || !channelSecret) {
   console.error("Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET")
   process.exit(1)
 }
-if (!anthropicAuthToken) {
-  console.error("Missing ANTHROPIC_AUTH_TOKEN or ANTHROPIC_API_KEY")
+if (!anthropicApiKey) {
+  console.error("Missing ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN")
   process.exit(1)
 }
 
 console.log("Claude Code LINE bot configuration:")
 console.log("- Channel access token present:", !!channelAccessToken)
 console.log("- Channel secret present:", !!channelSecret)
-console.log("- Auth token present:", !!anthropicAuthToken)
-console.log("- Base URL:", process.env.ANTHROPIC_BASE_URL ?? "(default)")
+console.log("- API key present:", !!anthropicApiKey)
+console.log("- Base URL:", anthropicBaseUrl ?? "(default)")
 console.log("- Model:", claudeModel)
 console.log("- Max turns:", claudeMaxTurns)
 console.log("- Max budget:", `$${claudeMaxBudget}`)
@@ -76,7 +77,11 @@ async function runClaude(
   for (const [k, v] of Object.entries(process.env)) {
     if (v !== undefined) env[k] = v
   }
-  env.ANTHROPIC_AUTH_TOKEN = anthropicAuthToken!
+  env.ANTHROPIC_API_KEY = anthropicApiKey!
+  if (anthropicBaseUrl) {
+    env.ANTHROPIC_BASE_URL = anthropicBaseUrl
+  }
+  delete env.ANTHROPIC_AUTH_TOKEN
   delete env.CLAUDECODE
 
   console.log(
