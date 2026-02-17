@@ -5,7 +5,8 @@ services:
     environment:
       - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
       - LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://api.z.ai/api/anthropic}
       - PORT=3000
       - CLAUDE_MODEL=${CLAUDE_MODEL:-sonnet}
       - CLAUDE_MAX_TURNS=${CLAUDE_MAX_TURNS:-10}
@@ -20,7 +21,7 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: claude-code-line-tunnel
-    command: tunnel --no-autoupdate --url http://line-bot:3000
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - line-bot
     restart: unless-stopped
