@@ -1,26 +1,41 @@
 services:
-  line-bot:
-    build: .
-    container_name: claude-code-line-bot
+  server:
+    build: ./server
+    container_name: cc-server
     environment:
-      - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
-      - LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://openrouter.ai/api}
-      - PORT=3000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN:-}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-}
+      - API_PASSWORD=${API_PASSWORD:-}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-sonnet}
       - CLAUDE_MAX_TURNS=${CLAUDE_MAX_TURNS:-10}
       - CLAUDE_MAX_BUDGET_USD=${CLAUDE_MAX_BUDGET_USD:-1.00}
-      - CLAUDE_TIMEOUT_MS=${CLAUDE_TIMEOUT_MS:-300000}
+      - PORT=4096
       - WORKSPACE_DIR=/workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ${PROJECT_DIR:-./workspace}:/workspace
       - claude-data:/home/claude/.claude
     restart: unless-stopped
 
+  line-bot:
+    build: .
+    container_name: cc-line-bot
+    environment:
+      - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
+      - LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET}
+      - SERVER_URL=http://server:4096
+      - SERVER_PASSWORD=${API_PASSWORD:-}
+      - PROMPT_TIMEOUT_MS=${PROMPT_TIMEOUT_MS:-300000}
+      - PORT=3000
+    depends_on:
+      - server
+    restart: unless-stopped
+
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: claude-code-line-tunnel
+    container_name: cc-line-tunnel
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - line-bot
